@@ -1,0 +1,7 @@
+*.ipynb
+data/*
+__pycache__/*
+hyper_parameter_search_data/*
+.idea/*
+models/*
+!/.gitkeep
