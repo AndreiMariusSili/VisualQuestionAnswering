@@ -3,3 +3,5 @@
 .idea
 .ipynb_checkpoints
 venv
+data/processed/*
+data/raw/*
