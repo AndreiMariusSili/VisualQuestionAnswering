@@ -10,7 +10,7 @@ import os
 import re
 
 
-def run():
+def run(max_labels: int):
     """Process the raw VQA data. Create csv files for training, evaluation, and testing that contain:
         - question id
         - image id
@@ -29,6 +29,9 @@ def run():
         ---------- available at https://aashishv.stackstorage.com/s/MvvB4IQNk9QlydI
         -------- json
         ---------- also available at https://aashishv.stackstorage.com/s/MvvB4IQNk9QlydI
+
+        Args:
+            max_labels: how many labels to tokenize. Rest is treated as OOV.
     """
     if not os.path.isdir(GZIP_FOLDER) or not os.path.isdir(JSON_FOLDER) or not os.path.isdir(H5_FOLDER):
         raise BlockingIOError('All or part of the raw data is not available. Check docstring for details.')
@@ -70,7 +73,7 @@ def run():
     print('Done.')
 
     print('Creating word and label mappings...', end='')
-    __generate_dictionaries(PROCESSED_FOLDER + PROCESSED_TRAIN_FILE, max_labels='all')
+    __generate_dictionaries(PROCESSED_FOLDER + PROCESSED_TRAIN_FILE, max_labels)
     print('Done.')
 
 
@@ -160,19 +163,14 @@ def __generate_dictionaries(path_to_csv: str, max_labels: Union[str, int] = 1000
     idx2word = list()
     labels2idx = dict()
 
-    oov = '<UNK>'
-    pad = '<PAD>'
-    eos = '<EOS>'
-    bos = '<BOS>'
-
-    idx2word.append(bos)
-    word2idx[bos] = 0
-    idx2word.append(eos)
-    word2idx[eos] = 1
-    idx2word.append(pad)
-    word2idx[pad] = 2
-    idx2word.append(oov)
-    word2idx[oov] = 3
+    idx2word.append(BOS)
+    word2idx[BOS] = 0
+    idx2word.append(EOS)
+    word2idx[EOS] = 1
+    idx2word.append(PAD)
+    word2idx[PAD] = 2
+    idx2word.append(OOV)
+    word2idx[OOV] = 3
 
     with open(path_to_csv, 'r') as csv_data:
         data = csv.reader(csv_data)
@@ -201,7 +199,7 @@ def __generate_dictionaries(path_to_csv: str, max_labels: Union[str, int] = 1000
     else:
         idx2labels = sorted_answers[0:max_labels - 1]
 
-    idx2labels.append(oov)  # append out of vocabulary word
+    idx2labels.append(OOV)  # append out of vocabulary word
 
     for i in range(len(idx2labels)):
         labels2idx[idx2labels[i]] = i

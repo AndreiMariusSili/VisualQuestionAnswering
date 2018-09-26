@@ -22,3 +22,8 @@ IDX2WORD_FILE = 'idx2word.pkl'
 WORD2IDX_FILE = 'word2idx.pkl'
 LABELS2IDX_FILE = 'labels2idx.pkl'
 IDX2LABELS_FILE = 'idx2labels.pkl'
+
+OOV = '<UNK>'
+PAD = '<PAD>'
+EOS = '<EOS>'
+BOS = '<BOS>'
