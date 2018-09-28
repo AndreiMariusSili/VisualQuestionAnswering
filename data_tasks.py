@@ -23,7 +23,7 @@ if __name__ == '__main__':
             start = datetime.now()
         print("InMemoryLoaderNoVisual | Steps: {} Average Time: {}".format(step + 1, timedelta(microseconds=time / (step + 1))))
 
-        loader = VQALoader('train', True, True, 64).get()
+        loader = VQALoader('train', True, True, 64, fix_q_len=2, fix_a_len=1).get()
         start = datetime.now()
         time = 0
         for step, (x_nlp, x_img, t) in enumerate(loader):
@@ -39,7 +39,7 @@ if __name__ == '__main__':
             start = datetime.now()
         print("OnDiskLoaderNoVisual | Steps: {} Average Time: {}".format(step + 1, timedelta(microseconds=time / (step + 1))))
 
-        loader = VQALoader('train', True, False, 64).get()
+        loader = VQALoader('train', True, False, 64, fix_q_len=2, fix_a_len=1).get()
         start = datetime.now()
         time = 0
         for step, (x_nlp, x_img, t) in enumerate(loader):
