@@ -35,7 +35,8 @@ class VQADatasetInMemory(data.Dataset):
         self._part = part
         self._img_feats = retrieve_vl_feat
 
-        self._device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        #self._device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        self._device = torch.device('cpu')
 
         with open(os.path.join(PROCESSED_FOLDER, IDX2LABELS_FILE), 'rb') as f:
             self._idx2labels = pickle.load(f)
@@ -146,7 +147,8 @@ class VQADatasetOnDisk(data.Dataset):
         self._part = part
         self._img_feats = retrieve_vl_feat
 
-        self._device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        #self._device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        self._device = torch.device('cpu')
 
         with open(os.path.join(PROCESSED_FOLDER, IDX2LABELS_FILE), 'rb') as f:
             self._idx2labels = pickle.load(f)
@@ -244,7 +246,7 @@ class VQADatasetOnDisk(data.Dataset):
 
 
 class VQALoader(object):
-    def __init__(self, part: str, retrieve_visual_features: bool, store_in_memory: bool, batch_size):
+    def __init__(self, part: str, retrieve_visual_features: bool, store_in_memory: bool, batch_size, num_workers=os.cpu_count()):
         """Initialises a DataLoader object with the VQA dataset
 
         Args:
@@ -259,14 +261,14 @@ class VQALoader(object):
                                            batch_size=batch_size,
                                            shuffle=True,
                                            collate_fn=self._dataset.collate_fn,
-                                           num_workers=os.cpu_count())
+                                           num_workers=num_workers)
         else:
             self._dataset = VQADatasetOnDisk(part, retrieve_visual_features)
             self._loader = data.DataLoader(self._dataset,
                                            batch_size=batch_size,
                                            shuffle=True,
                                            collate_fn=self._dataset.collate_fn,
-                                           num_workers=os.cpu_count())
+                                           num_workers=num_workers)
 
     def get(self):
         return self._loader
