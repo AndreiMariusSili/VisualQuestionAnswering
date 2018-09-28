@@ -115,7 +115,7 @@ class VQADatasetInMemory(data.Dataset):
             else:
                 question = question[:q_len_diff - 1]
                 question.append(self._word2idx[EOS])
-            x_nl_batch.append(torch.tensor(question, dtype=torch.float))
+            x_nl_batch.append(torch.tensor(question, dtype=torch.long))
 
             a_len_diff = self._answer_max_length - len(target)
             if a_len_diff >= 0:
@@ -238,7 +238,7 @@ class VQADatasetOnDisk(data.Dataset):
             else:
                 question = question[:q_len_diff-1]
                 question.append(self._word2idx[EOS])
-            x_nl_batch.append(torch.tensor(question, dtype=torch.float))
+            x_nl_batch.append(torch.tensor(question, dtype=torch.long))
 
             a_len_diff = self._answer_max_length - len(target)
             if a_len_diff >= 0:

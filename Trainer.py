@@ -11,13 +11,13 @@ DEVICE = torch.device("cuda") if torch.cuda.is_available() else torch.device("cp
 class Trainer:
 
     @staticmethod
-    def init_train_save(embedding_size=300, epochs=10, lr=0.001, question_maxlen=20, visual_model=True, hidden_units = 2048, dropout = 0.2, number_stacked_lstms=1, adding_mlp = 0, number_mlp_units = 1024,
-                        save=False, modelname='model', verbose=True, model_type=None, image_features=None):
+    def init_train_save(embedding_size=300, epochs=10, lr=0.001, question_maxlen=20, visual_model=True, hidden_units = 256, dropout = 0.2, number_stacked_lstms=1, adding_mlp = 0, number_mlp_units = 1024,
+                        save=False, modelname='model', verbose=True, model_type=None, image_features=None, max_a_len=1):
         """
         return: model, lossv, accv, modelname
         """
-        train_data = VQALoader("train", True, True, 32)#, max_q_len, max_a_len)
-        val_data = VQALoader("val", True, True, 32, 0)
+        train_data = VQALoader("train", True, True, 32, fix_q_len=question_maxlen, fix_a_len=max_a_len)
+        val_data = VQALoader("val", True, True, 32, 0, fix_q_len=question_maxlen, fix_a_len=max_a_len)
 
         vocab_size = len(train_data.word2idx)
         output_size = len(train_data.label2idx)
@@ -103,6 +103,7 @@ class Trainer:
                 print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     epoch, batch_idx * len(questions), len(train_loader.dataset),
                            100. * batch_idx / len(train_loader), loss.item()))
+
         loss_vector.append(loss)
 
     @staticmethod
