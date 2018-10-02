@@ -1,6 +1,7 @@
 import argparse
 import random
 import itertools
+import numpy as np
 
 from Trainer import Trainer
 
@@ -12,6 +13,10 @@ LSTM = 'lstm'
 BOW = 'bow'
 
 RANDOM_ITERATIONS = 60
+
+
+def _is_model_better(acc, max_acc):
+    return np.mean(acc[-100:]) >= max_acc
 
 
 def _init_train_save(parameters: dict):
@@ -68,14 +73,19 @@ def grid_search_bow(parameter_space: dict) -> (object, list, list, str, dict):
 
     for parameters in parameter_dictionary_list:
         # init/train/save and get accuracies and models
-        model, loss, acc, model_name = _init_train_save(parameters)
+        try:
+            model, loss, acc, model_name = _init_train_save(parameters)
+        except Exception as e:
+            exception_str_ = 'Model type {} encountered an exception for parameters:\n\t{}\n{}'
+            print(exception_str_.format(parameters['model_type'], parameters, e), flush=True)
+            continue
 
         # print results
-        results_str_ = 'Model name: {}\n\tMax accuracy: {0:.4f}, Final accuracy: {0:.4f}'
+        results_str_ = 'Model name: {}\tMax accuracy: {:.4f}, Final accuracy: {:.4f}'
         print(results_str_.format(model_name, max(*acc), acc[-1]), flush=True)
 
         # update best model
-        if acc[-1] >= max_acc:
+        if _is_model_better(acc, max_acc):
             max_acc = acc[-1]
             best_model = (model, loss, acc, model_name, parameters)
 
@@ -96,21 +106,26 @@ def grid_search_lstm(parameter_space: dict) -> (object, list, list, str, dict):
 
     for parameters in parameter_dictionary_list:
         # init/train/save and get accuracies and models
-        model, loss, acc, model_name = _init_train_save(parameters)
+        try:
+            model, loss, acc, model_name = _init_train_save(parameters)
+        except Exception as e:
+            exception_str_ = 'Model type {} encountered an exception for parameters:\n\t{}\n{}'
+            print(exception_str_.format(parameters['model_type'], parameters, e), flush=True)
+            continue
 
         # print results
-        results_str_ = 'Model name: {}\n\tMax accuracy: {0:.4f}, Final accuracy: {0:.4f}'
+        results_str_ = 'Model name: {}\tMax accuracy: {:.4f}, Final accuracy: {:.4f}'
         print(results_str_.format(model_name, max(*acc), acc[-1]), flush=True)
 
         # update best model
-        if acc[-1] >= max_acc:
+        if _is_model_better(acc, max_acc):
             max_acc = acc[-1]
             best_model = (model, loss, acc, model_name, parameters)
 
     return best_model
 
 
-def random_search(parameter_space: dict, search_iterations: int, model_type: str) -> (object, list, list, str, dict):
+def random_search(parameter_space: dict, search_iterations: int) -> (object, list, list, str, dict):
     # prepare variables for saving the best model
     best_model = None
     max_acc = 0
@@ -119,18 +134,20 @@ def random_search(parameter_space: dict, search_iterations: int, model_type: str
         # get random parameters
         parameters = get_random_parameters(parameter_space)
 
-        # add further necessary parameters to list
-        parameters['model_type'] = model_type
-
         # init/train/save and get accuracies and models
-        model, loss, acc, model_name = _init_train_save(parameters)
+        try:
+            model, loss, acc, model_name = _init_train_save(parameters)
+        except Exception as e:
+            exception_str_ = 'Model type {} encountered an exception for parameters:\n\t{}\n{}'
+            print(exception_str_.format(parameters['model_type'], parameters, e), flush=True)
+            continue
 
         # print results
-        results_str_ = 'Model name: {}\n\tMax accuracy: {0:.4f}, Final accuracy: {0:.4f}'
+        results_str_ = 'Model name: {}\tMax accuracy: {:.4f}, Final accuracy: {:.4f}'
         print(results_str_.format(model_name, max(*acc), acc[-1]), flush=True)
 
         # update best model
-        if acc[-1] >= max_acc:
+        if _is_model_better(acc, max_acc):
             max_acc = acc[-1]
             best_model = (model, loss, acc, model_name, parameters)
 
@@ -140,7 +157,7 @@ def random_search(parameter_space: dict, search_iterations: int, model_type: str
 def search_hyperparameters_bow(parameter_space: dict, search_type: str, search_iterations: int) -> (object, list, list, str, dict):
 
     if search_type == RANDOM_SEARCH:
-        random_search(parameter_space, search_iterations, BOW)
+        random_search(parameter_space, search_iterations)
     elif search_type == GRID_SEARCH:
         grid_search_bow(parameter_space)
     else:
@@ -150,7 +167,7 @@ def search_hyperparameters_bow(parameter_space: dict, search_type: str, search_i
 def search_hyperparameters_lstm(parameter_space: dict, search_type: str, search_iterations: int) -> (object, list, list, str, dict):
 
     if search_type == RANDOM_SEARCH:
-        return random_search(parameter_space, search_iterations, LSTM)
+        return random_search(parameter_space, search_iterations)
     elif search_type == GRID_SEARCH:
         return grid_search_lstm(parameter_space)
     else:
@@ -169,9 +186,9 @@ def search_hyperparameters(parameter_space: dict, args) -> (object, list, list, 
 def main():
     # read command line parameters
     parser = argparse.ArgumentParser()
-    parser.add_argument("--search-type", type=str, default=RANDOM_SEARCH, choices=[RANDOM_SEARCH, GRID_SEARCH])
-    parser.add_argument("--search-iterations", type=int, default=RANDOM_ITERATIONS)
-    parser.add_argument("--model", type=str, default=LSTM, choices=[LSTM, BOW])
+    parser.add_argument("-s", "--search-type", type=str, default=RANDOM_SEARCH, choices=[RANDOM_SEARCH, GRID_SEARCH])
+    parser.add_argument("-i", "--search-iterations", type=int, default=RANDOM_ITERATIONS)
+    parser.add_argument("-m", "--model", type=str, default=LSTM, choices=[LSTM, BOW])
     args = parser.parse_args()
 
     # setup parameter space
@@ -190,6 +207,7 @@ def main():
         'visual_model': [False, True],
         'attention': [False, True],
         'pre_trained_embedding': [True, False],
+        'model_type': [args.model],
     }
 
     # search optimal hyper-parameters
