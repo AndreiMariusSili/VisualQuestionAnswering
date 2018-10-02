@@ -10,17 +10,18 @@ from lstm import LSTM
 
 DEVICE = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
+
 class Trainer:
 
     @staticmethod
     def init_train_save(embedding_size=300, epochs=10, lr=0.001, question_maxlen=20, visual_model=True, hidden_units = 256, dropout = 0.2, number_stacked_lstms=1, adding_mlp = 0, number_mlp_units = 1024,
                         save=False, modelname='model', verbose=True, model_type=None, image_features=None, max_a_len=1,
-                        use_pretrained_embeddings=True):
+                        use_pretrained_embeddings=True,  batch_size=32, attention=False):
         """
         return: model, lossv, accv, modelname
         """
-        train_data = VQALoader("train", True, True, 32, fix_q_len=question_maxlen, fix_a_len=max_a_len)
-        val_data = VQALoader("val", True, True, 32, 0, fix_q_len=question_maxlen, fix_a_len=max_a_len)
+        train_data = VQALoader("train", True, True, batch_size=batch_size, fix_q_len=question_maxlen, fix_a_len=max_a_len)
+        val_data = VQALoader("val", True, True, batch_size=batch_size, num_workers=0, fix_q_len=question_maxlen, fix_a_len=max_a_len)
 
         vocab_size = len(train_data.word2idx)
         output_size = len(train_data.label2idx)
@@ -44,7 +45,7 @@ class Trainer:
                         question_len=question_maxlen, img_feature_size=2048, visual_model=visual_model,
                         pretrained_embeddings=pretrained_embeddings)
         else:
-            raise ValueError("dafuq man?")
+            raise ValueError("Exceptional error! We are still in 2018; the model type \'{}\' has not been invented yet.".fomat(model_type))
 
         print(model)
 
