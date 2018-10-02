@@ -16,7 +16,7 @@ class Trainer:
         """
         return: model, lossv, accv, modelname
         """
-        train_data = VQALoader("train", True, True, 32, fix_q_len=question_maxlen, fix_a_len=max_a_len)
+        train_data = VQALoader("train", True, True, 32, 0, fix_q_len=question_maxlen, fix_a_len=max_a_len)
         val_data = VQALoader("val", True, True, 32, 0, fix_q_len=question_maxlen, fix_a_len=max_a_len)
 
         vocab_size = len(train_data.word2idx)
@@ -38,8 +38,6 @@ class Trainer:
 
         model.to(DEVICE)
 
-        train_loader = train_data.get()
-        validation_loader = val_data.get()
         optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
         #model_description = {}
@@ -47,9 +45,9 @@ class Trainer:
         loss_valid, acc_valid, loss_train = [], [], []
 
         for epoch in range(1, epochs + 1):
-            Trainer.train(model=model, train_loader=train_loader, optimizer=optimizer,
+            Trainer.train(model=model, train_data=train_data, optimizer=optimizer,
                           epoch=epoch, loss_vector=loss_train, verbose=verbose)
-            Trainer.validate(model, validation_loader, loss_valid, acc_valid, verbose=verbose)
+            Trainer.validate(model, val_data, loss_valid, acc_valid, verbose=verbose)
 
         # model_description["lossv"] = [value for value in lossv]
         # model_description["accv"] = [value for value in accv]
@@ -62,19 +60,29 @@ class Trainer:
         return model, loss_valid, acc_valid, modelname
 
     @staticmethod
-    def validate(model, validation_loader, loss_vector, accuracy_vector, verbose=True):
+    def validate(model, val_data, loss_vector, accuracy_vector, verbose=True):
         model.eval()
-        criterion = torch.nn.CrossEntropyLoss()
+        validation_loader = val_data.get()
+        criterion = torch.nn.CrossEntropyLoss().cuda()
         val_loss, correct = torch.tensor([0], dtype=torch.float, device=DEVICE), 0
-        for batch_idx, (questions, image_fetures, target) in enumerate(validation_loader):
+        for batch_idx, (questions, image_features, target) in enumerate(validation_loader):
             with torch.no_grad():
-                questions, image_fetures, target = Variable(questions.to(DEVICE)), Variable(image_fetures.to(DEVICE)), Variable(target.to(DEVICE))
-                output = model(questions, image_fetures)
+                questions, image_features, target = Variable(questions.to(DEVICE)), Variable(image_features.to(DEVICE)), Variable(target.to(DEVICE))
+                output = model(questions, image_features)
                 loss = criterion(output, target[:, 0])
                 val_loss = torch.add(val_loss, loss)
+                idx_in_batch = 0
 
-                pred = output.data.max(1)[1]  # get the index of the max log-probability
-                correct += pred.eq(target[:, 0].data).sum().cpu()
+                pred = output.data.argmax(1)  # get the index of the max log-probability
+                correct += pred.eq(target[:, 0]).sum().cpu()
+
+        for idx_in_batch in range(10):
+            print("\nquestion:")
+            print([val_data.idx2word[word] for word in questions[idx_in_batch]])
+            print("truth:")
+            print([val_data.idx2label[target[idx_in_batch, 0]]])
+            print("answer:")
+            print([val_data.idx2label[pred[idx_in_batch]]])
 
         val_loss /= len(validation_loader)
         loss_vector.append(val_loss)
@@ -88,13 +96,14 @@ class Trainer:
                 val_loss.item(), correct.cpu(), len(validation_loader.dataset), accuracy))
 
     @staticmethod
-    def train(model, train_loader, optimizer, epoch, loss_vector, log_interval=100, verbose=True):
+    def train(model, train_data, optimizer, epoch, loss_vector, log_interval=100, verbose=True):
         model.train()
-        criterion = torch.nn.CrossEntropyLoss()
-        for batch_idx, (questions, image_fetures, target) in enumerate(train_loader):
-            questions, image_fetures, target = Variable(questions.to(DEVICE)), Variable(image_fetures.to(DEVICE)), Variable(target.to(DEVICE))
+        train_loader = train_data.get()
+        criterion = torch.nn.CrossEntropyLoss(ignore_index=len(train_data.idx2label)-1).cuda()
+        for batch_idx, (questions, image_features, target) in enumerate(train_loader):
+            questions, image_features, target = Variable(questions.to(DEVICE)), Variable(image_features.to(DEVICE)), Variable(target.to(DEVICE))
             optimizer.zero_grad()
-            output = model(questions, image_fetures)
+            output = model(questions, image_features)
 
             loss = criterion(output, target[:,0])
             loss.backward()
@@ -104,7 +113,7 @@ class Trainer:
                     epoch, batch_idx * len(questions), len(train_loader.dataset),
                            100. * batch_idx / len(train_loader), loss.item()))
 
-        loss_vector.append(loss)
+            loss_vector.append(loss)
 
     @staticmethod
     def save(model, path):
@@ -115,6 +124,3 @@ class Trainer:
     def load(path):
         model = torch.load(path)
         return model
-
-
-Trainer.init_train_save(model_type='bow')
