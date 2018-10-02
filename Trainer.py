@@ -16,7 +16,7 @@ class Trainer:
         """
         return: model, lossv, accv, modelname
         """
-        train_data = VQALoader("train", True, True, 32, 0, fix_q_len=question_maxlen, fix_a_len=max_a_len)
+        train_data = VQALoader("train", True, True, 32, fix_q_len=question_maxlen, fix_a_len=max_a_len)
         val_data = VQALoader("val", True, True, 32, 0, fix_q_len=question_maxlen, fix_a_len=max_a_len)
 
         vocab_size = len(train_data.word2idx)
@@ -25,7 +25,7 @@ class Trainer:
         if model_type == 'lstm':
             model = LSTM(vocab_size=vocab_size, output_size=output_size, embedding_size=embedding_size,
                          hidden_size=hidden_units, img_feature_size=2048, number_stacked_lstms=number_stacked_lstms,
-                         visual_model=visual_model, attention="PULA")
+                         visual_model=visual_model, visual_features_location=['lstm_context', 'lstm_output']) #['lstm_context', 'lstm_output', 'lstm_input']
         elif model_type == 'rnn':
             model = RNN(...)
         elif model_type == 'bow':
