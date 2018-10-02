@@ -7,13 +7,17 @@ class BOW(nn.Module):
     BOW Model PyTorch implementation
     """
 
-    def __init__(self, vocab_size, output_size, embedding_size, question_len=25,
-                 img_feature_size=2048, visual_model=False):
+    def __init__(self, vocab_size, output_size, embedding_size, question_len=25, img_feature_size=2048,
+                 visual_model=False, pretrained_embeddings=None, embedding_trainable=True):
         super(BOW, self).__init__()
 
         self.visual_model = visual_model
 
         self.embedding = nn.Embedding(vocab_size, embedding_size)
+        if pretrained_embeddings is not None:
+            self.embedding.weight.data.copy_(torch.from_numpy(pretrained_embeddings))
+            if not embedding_trainable:
+                self.embedding.weight.requires_grad = False
 
         if visual_model:
             linear_input_size = embedding_size * question_len + img_feature_size
