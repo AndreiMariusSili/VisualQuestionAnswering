@@ -8,8 +8,9 @@ class LSTM(nn.Module):
     LSTM Model PyTorch implementation
     """
 
-    def __init__(self, vocab_size, output_size, embedding_size, hidden_size,
-                 img_feature_size=2048, number_stacked_lstms=1, visual_model=False, visual_features_location=None):
+    def __init__(self, vocab_size, output_size, embedding_size, hidden_size, img_feature_size=2048,
+                 number_stacked_lstms=1, visual_model=False, pretrained_embeddings=None, embedding_trainable=True,
+                 visual_features_location=None):
         """
 
         :param vocab_size:
@@ -33,6 +34,10 @@ class LSTM(nn.Module):
         self.number_stacked_lstms = number_stacked_lstms
 
         self.embedding = nn.Embedding(vocab_size, embedding_size)
+        if pretrained_embeddings is not None:
+            self.embedding.weight.data.copy_(torch.from_numpy(pretrained_embeddings))
+            if not embedding_trainable:
+                self.embedding.weight.requires_grad = False
 
         if self.visual_model and 'lstm_input' in self.visual_features_location:
             self.lstm = nn.LSTM(input_size=embedding_size+img_feature_size, hidden_size=hidden_size, num_layers=number_stacked_lstms,

@@ -5,3 +5,6 @@
 venv
 data/processed/*
 data/raw/*
+__pycache__/
+data/__pycache__/
+misc/__pycache__/

@@ -3,6 +3,7 @@ GZIP_FOLDER = 'data/raw/gzip/'
 JSON_FOLDER = 'data/raw/json/'
 H5_FOLDER = 'data/raw/h5/'
 PROCESSED_FOLDER = 'data/processed/'
+EMBEDDING_FOLDER = 'data/embedding/'
 
 VL_FEAT_FILE = 'visual_features.h5'
 IMG2ID_FILE = 'img2id.json'
@@ -27,3 +28,5 @@ OOV = '<unk>'
 PAD = '<pad>'
 EOS = '<eos>'
 BOS = '<bos>'
+
+EMBEDDING_FILE = 'embedding_{}.pkl'

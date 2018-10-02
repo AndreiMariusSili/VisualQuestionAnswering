@@ -1,6 +1,8 @@
 import torch
 from torch.autograd import Variable
 import torch.nn.functional as F
+from misc.constants import EMBEDDING_FILE, EMBEDDING_FOLDER
+import pickle
 
 from bow import BOW
 from data.loader import VQALoader
@@ -12,7 +14,8 @@ class Trainer:
 
     @staticmethod
     def init_train_save(embedding_size=300, epochs=10, lr=0.001, question_maxlen=20, visual_model=True, hidden_units = 256, dropout = 0.2, number_stacked_lstms=1, adding_mlp = 0, number_mlp_units = 1024,
-                        save=False, modelname='model', verbose=True, model_type=None, image_features=None, max_a_len=1):
+                        save=False, modelname='model', verbose=True, model_type=None, image_features=None, max_a_len=1,
+                        use_pretrained_embeddings=True):
         """
         return: model, lossv, accv, modelname
         """
@@ -22,15 +25,24 @@ class Trainer:
         vocab_size = len(train_data.word2idx)
         output_size = len(train_data.label2idx)
 
+        assert embedding_size in [50, 100, 200, 300]
+        pretrained_embeddings = None
+        if use_pretrained_embeddings:
+            embedding_file = EMBEDDING_FOLDER + EMBEDDING_FILE.format(embedding_size)
+            with open(embedding_file, 'rb') as f:
+                pretrained_embeddings = pickle.load(f)
+
         if model_type == 'lstm':
             model = LSTM(vocab_size=vocab_size, output_size=output_size, embedding_size=embedding_size,
                          hidden_size=hidden_units, img_feature_size=2048, number_stacked_lstms=number_stacked_lstms,
-                         visual_model=visual_model, visual_features_location=['lstm_context', 'lstm_output']) #['lstm_context', 'lstm_output', 'lstm_input']
+                         visual_model=visual_model, pretrained_embeddings=pretrained_embeddings,
+                         visual_features_location=['lstm_context', 'lstm_output']) #['lstm_context', 'lstm_output', 'lstm_input']
         elif model_type == 'rnn':
             model = RNN(...)
         elif model_type == 'bow':
             model = BOW(vocab_size=vocab_size, output_size=output_size, embedding_size=embedding_size,
-                        question_len=question_maxlen, img_feature_size=2048, visual_model=True)
+                        question_len=question_maxlen, img_feature_size=2048, visual_model=visual_model,
+                        pretrained_embeddings=pretrained_embeddings)
         else:
             raise ValueError("dafuq man?")
 
