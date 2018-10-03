@@ -73,9 +73,9 @@ class Trainer(object):
                 correct += pred.eq(answer).sum().cpu()
 
                 if verbose and idx < 10:
-                    print(self.valid_data.convert_question_to_string(question.squeeze().numpy().tolist()), end=" ")
-                    print(("Truth", self.valid_data.convert_answer_to_string([answer.item()])), end=" ")
-                    print(("Prediction", self.valid_data.convert_answer_to_string([pred.item()])))
+                    print(self.valid_data.convert_question_to_string(question.squeeze().cpu().numpy().tolist()), end=" ")
+                    print(("Truth", self.valid_data.convert_answer_to_string([answer.cpu().item()])), end=" ")
+                    print(("Prediction", self.valid_data.convert_answer_to_string([pred.cpu().item()])))
 
         val_loss /= len(self.valid_data)
         loss_vector.append(val_loss.item())
