@@ -193,7 +193,7 @@ def search_hyperparameters(parameter_space: dict, args) -> (object, list, list, 
 def main():
     # read command line parameters
     parser = argparse.ArgumentParser()
-    parser.add_argument('--search-type', type=str, default=GRID_SEARCH, choices=[RANDOM_SEARCH, GRID_SEARCH])
+    parser.add_argument('--search-type', type=str, default=RANDOM_SEARCH, choices=[RANDOM_SEARCH, GRID_SEARCH])
     parser.add_argument('--search-iterations', type=int, default=RANDOM_ITERATIONS)
     parser.add_argument('--model', type=str, default=LSTM, choices=[LSTM, BOW])
     args = parser.parse_args()
