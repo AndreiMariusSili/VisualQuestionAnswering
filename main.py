@@ -22,13 +22,8 @@ def get_embeddings(embedding_size):
         pretrained_embeddings = pickle.load(f)
     return pretrained_embeddings
 
-def init_train_save(config_model, config_trainer):
-
+def init_train_save(config_model, config_trainer, train_data, val_data):
     serializer = Serializer(MODELS_PATH)
-
-    train_data = VQALoader("train", True, True, BATCH_SIZE, fix_q_len=QUESTION_MAX_LEN, fix_a_len=ANSWER_MAX_LEN)
-    val_data = VQALoader("val", True, True, BATCH_SIZE, num_workers=0, fix_q_len=QUESTION_MAX_LEN, fix_a_len=ANSWER_MAX_LEN)
-
 
     vocab_size = len(train_data.word2idx)
     output_size = len(train_data.label2idx)
@@ -89,5 +84,9 @@ config_trainer.verbose = True
 config_trainer.epochs = 2
 config_trainer.lr = 0.001
 
-init_train_save(config_model, config_trainer)
+train_data = VQALoader("train", True, True, BATCH_SIZE, fix_q_len=QUESTION_MAX_LEN, fix_a_len=ANSWER_MAX_LEN)
+val_data = VQALoader("val", True, True, BATCH_SIZE, num_workers=0, fix_q_len=QUESTION_MAX_LEN, fix_a_len=ANSWER_MAX_LEN)
+
+init_train_save(config_model, config_trainer, train_data, val_data)
+
 #load_evaluate('lstm')
