@@ -48,8 +48,10 @@ class LSTM(torch.nn.Module):
                                       num_layers=number_stacked_lstms,
                                       batch_first=True, dropout=dropout)
         if self.visual_model and 'lstm_context' in self.visual_features_location:
+            self.visual_features_to_layer_features = torch.nn.Linear(img_feature_size, img_feature_size)
             self.layer_features_to_hidden = torch.nn.Linear(img_feature_size, hidden_size)
         if self.visual_model and 'lstm_output' in self.visual_features_location:
+            self.lstm_to_linear = torch.nn.Linear(hidden_size + img_feature_size, hidden_size + img_feature_size)
             self.output_linear = torch.nn.Linear(hidden_size + img_feature_size, output_size)
         else:
             self.output_linear = torch.nn.Linear(hidden_size, img_feature_size)
@@ -62,7 +64,8 @@ class LSTM(torch.nn.Module):
             input = torch.cat((input, image_features.unsqueeze(1).repeat(1, input.shape[1], 1)), 2)
 
         if self.visual_model and 'lstm_context' in self.visual_features_location:
-            c_0 = self.layer_features_to_hidden(image_features).unsqueeze(0).repeat(self.number_stacked_lstms, 1, 1)
+            layer_features = self.visual_features_to_layer_features(image_features)
+            c_0 = self.layer_features_to_hidden(layer_features).unsqueeze(0).repeat(self.number_stacked_lstms, 1, 1)
         else:
             c_0 = torch.zeros(self.number_stacked_lstms, sentence.shape[0], self.hidden_size, device=DEVICE)
 
@@ -73,7 +76,8 @@ class LSTM(torch.nn.Module):
             # concatenate features to the last state of the lstm cell
             last_lstm_state = lstm_out[:, -1]
             lstm_state_image_features = torch.cat((last_lstm_state, image_features), 1)
-            output = self.output_linear(lstm_state_image_features)
+            lstm_to_linear = self.lstm_to_linear(lstm_state_image_features)
+            output = self.output_linear(lstm_to_linear)
         else:
             # only take the state of the last lstm cell to predict the output
             last_lstm_state = lstm_out[:, -1]
