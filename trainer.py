@@ -12,7 +12,7 @@ class Trainer:
         self.serializer = serializer
 
     def train(self, model, epochs, lr=0.001, verbose=True, save=False, modelname=None, config_trainer=None, config_model=None):
-        optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
 
         loss_valid, acc_valid, loss_train = [], [], []
 
