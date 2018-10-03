@@ -76,9 +76,9 @@ class Trainer:
                 print("answer:")
                 print([self.valid_data.idx2label[pred[idx_in_batch]]])
 
-                # Print accuracy
-                print('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)\n'.format(
-                    val_loss.item(), correct.cpu(), len(validation_loader.dataset), accuracy))
+            # Print accuracy
+            print('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)\n'.format(
+                val_loss.item(), correct.cpu(), len(validation_loader.dataset), accuracy))
 
         return  loss_vector, accuracy_vector
 
