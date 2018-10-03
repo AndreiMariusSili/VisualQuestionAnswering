@@ -2,8 +2,9 @@ import argparse
 import random
 import itertools
 import numpy as np
+
 from types import SimpleNamespace
-from data.loader import VQALoader
+from data.dataset import VQADataset
 from main import init_train_save
 
 # constants
@@ -24,28 +25,27 @@ def _init_train_save(parameters: dict):
     # migrate parameters from Dictionary() to Namespace()
     config_model = SimpleNamespace()
     config_model.model_type = parameters['model_type']
-    config_model.embedding_size = parameters['embedding_dims']
+    config_model.embedding_size = parameters['embedding_size']
     config_model.hidden_units = parameters['lstm_hidden_units']
     config_model.number_stacked_lstms = parameters['number_stacked_lstms']
     config_model.visual_model = parameters['visual_model']
-    config_model.visual_features_location = ['lstm_context',
-                                             'lstm_output']  # ['lstm_context', 'lstm_output', 'lstm_input']
-    config_model.use_pretrained_embeddings = parameters['pre_trained_embedding']
-    config_model.embedding_size = parameters['embedding_dims']
-    config_model.image_features = parameters['image_features']
+    config_model.visual_features_location = parameters['visual_features_location']
+    config_model.use_pretrained_embeddings = parameters['use_pretrained_embeddings']
+    config_model.img_features_len = parameters['img_features_len']
+    config_model.lstm_dropout = parameters['lstm_dropout']
+    config_model.question_max_len = parameters['question_max_len']
 
     config_trainer = SimpleNamespace()
-    config_trainer.save = True
-    config_trainer.verbose = True
-    config_trainer.epochs = parameters['nr_epoch']
-    config_trainer.lr = parameters['learning_rate']
+    config_trainer.save = parameters['save']
+    config_trainer.verbose = parameters['verbose']
+    config_trainer.epochs = parameters['epochs']
+    config_trainer.lr = parameters['lr']
 
-    train_data = VQALoader("train", True, True, parameters['batch_sizes'], fix_q_len=parameters['max_question_lens'],
-                           fix_a_len=parameters['max_answers'])
-    val_data = VQALoader("val", True, True, parameters['batch_sizes'], num_workers=0,
-                         fix_q_len=parameters['max_question_lens'], fix_a_len=parameters['max_answers'])
+    train_data = VQADataset("train", True, fix_q_len=parameters['question_max_len'])
+    val_data = VQADataset("val", True, fix_q_len=parameters['question_max_len'])
 
-    return init_train_save(config_model, config_trainer, train_data, val_data)
+    # return init_train_save(config_model, config_trainer, train_data, val_data)
+    return None
 
 
 def get_random_parameters(parameter_space: dict) -> dict:
@@ -65,10 +65,9 @@ def grid_search_bow(parameter_space: dict) -> (object, list, list, list, str, di
     # remove unused parameters
     parameter_space.pop('lstm_hidden_units', None)
     parameter_space.pop('number_stacked_lstms', None)
-    parameter_space.pop('add_mlp', None)
     parameter_space.pop('mlp_hidden_units', None)
-    parameter_space.pop('dropouts', None)
-    parameter_space.pop('attention', None)
+    parameter_space.pop('lstm_dropout', None)
+    parameter_space.pop('visual_features_location', None)
 
     # run the grid search
     keys = list(parameter_space.keys())
@@ -158,8 +157,7 @@ def random_search(parameter_space: dict, search_iterations: int) -> (object, lis
     return best_model
 
 
-def search_hyperparameters_bow(parameter_space: dict, search_type: str, search_iterations: int) -> (
-object, list, list, list, str, dict):
+def search_hyperparameters_bow(parameter_space: dict, search_type: str, search_iterations: int) -> (object, list, list, list, str, dict):
     if search_type == RANDOM_SEARCH:
         return random_search(parameter_space, search_iterations)
     elif search_type == GRID_SEARCH:
@@ -168,8 +166,7 @@ object, list, list, list, str, dict):
         raise Exception('Argument search_type has an invalid value: {}'.format(search_type))
 
 
-def search_hyperparameters_lstm(parameter_space: dict, search_type: str, search_iterations: int) -> (
-object, list, list, list, str, dict):
+def search_hyperparameters_lstm(parameter_space: dict, search_type: str, search_iterations: int) -> (object, list, list, list, str, dict):
     if search_type == RANDOM_SEARCH:
         return random_search(parameter_space, search_iterations)
     elif search_type == GRID_SEARCH:
@@ -197,19 +194,21 @@ def main():
 
     # setup parameter space
     parameter_space = {
-        'nr_epoch': [5, 8, 10],  # 100
-        'batch_sizes': [32, 64, 128],  # 128, 256
-        'learning_rate': [1e-2, 1e-3, 1e-4, 1e-5],
-        'image_features': [2048],
-        'max_question_lens': [10, 15, 20, 30],  # 20 for BOW
-        'max_answers': [500, 1000, 2000, 4000, 'all'],  # none
-        'embedding_dims': [200, 300, 400, 600],  # 300
-        'lstm_hidden_units': [256, 512, 104],  # 512, 1024, 2048
-        'number_stacked_lstms': [0, 1, 2],  # 2
+        'model_type': [args.model],  # bow, lstm
+        'save': [True],
+        'verbose': [True],
+        'img_features_len': [2048],
+        'question_max_len': [20],  # bow
+        'embedding_size': [300],
+        'number_stacked_lstms': [2],
+        'epochs': [100],
+        'batch_sizes': [128, 256],
+        'lr': [1e-2, 1e-3, 1e-4, 1e-5],
+        'lstm_hidden_units': [512, 1024, 2048],
         'visual_model': [False, True],
-        'pre_trained_embedding': [True, False],
-        'model_type': [args.model],  # BOW, LSTM
-        'dropout': [0.0, 0.5]
+        'use_pretrained_embeddings': [True, False],
+        'lstm_dropout': [0.0, 0.3, 0.5],
+        'visual_features_location': [['lstm_context', 'lstm_output']]  # any 'lstm_context', 'lstm_output', 'lstm_input'
     }
 
     # search optimal hyper-parameters
