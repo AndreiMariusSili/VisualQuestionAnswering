@@ -2,8 +2,10 @@ import argparse
 import random
 import itertools
 import numpy as np
+from types import SimpleNamespace
+from data.loader import VQALoader
+from main import init_train_save
 
-from Trainer import Trainer
 
 # constants
 RANDOM_SEARCH = 'random'
@@ -20,26 +22,28 @@ def _is_model_better(acc, max_acc):
 
 
 def _init_train_save(parameters: dict):
-    return Trainer.init_train_save(embedding_size=parameters['embedding_dims'],
-                                   epochs=parameters['nr_epoch'],
-                                   lr=parameters['learning_rate'],
-                                   question_maxlen=parameters['max_question_lens'],
-                                   visual_model=parameters['visual_model'],
-                                   hidden_units=parameters['lstm_hidden_units'],
-                                   dropout=parameters['dropouts'],
-                                   number_stacked_lstms=parameters['number_stacked_lstms'],
-                                   adding_mlp=parameters['add_mlp'],
-                                   number_mlp_units=parameters['mlp_hidden_units'],
-                                   save=True,
-                                   modelname=None,
-                                   verbose=True,
-                                   model_type=parameters['model_type'],
-                                   image_features=None,
-                                   max_a_len=parameters['max_answers'],
-                                   use_pretrained_embeddings=parameters['pre_trained_embedding'],
-                                   batch_size=parameters['batch_sizes'],
-                                   attention=parameters['attention'],
-                                   )
+    # migrate parameters from Dictionary() to Namespace()
+    config_model = SimpleNamespace()
+    config_model.model_type = parameters['model_type']
+    config_model.embedding_size = parameters['embedding_dims']
+    config_model.hidden_units = parameters['lstm_hidden_units']
+    config_model.number_stacked_lstms = parameters['number_stacked_lstms']
+    config_model.visual_model = parameters['visual_model']
+    config_model.visual_features_location = ['lstm_context', 'lstm_output']  # ['lstm_context', 'lstm_output', 'lstm_input']
+    config_model.use_pretrained_embeddings = parameters['pre_trained_embedding']
+    config_model.embedding_size = parameters['embedding_dims']
+    config_model.image_features = parameters['image_features']
+
+    config_trainer = SimpleNamespace()
+    config_trainer.save = True
+    config_trainer.verbose = True
+    config_trainer.epochs = parameters['nr_epoch']
+    config_trainer.lr = parameters['learning_rate']
+
+    train_data = VQALoader("train", True, True, parameters['batch_sizes'], fix_q_len=parameters['max_question_lens'], fix_a_len=parameters['max_answers'])
+    val_data = VQALoader("val", True, True, parameters['batch_sizes'], num_workers=0, fix_q_len=parameters['max_question_lens'], fix_a_len=parameters['max_answers'])
+
+    return init_train_save(config_model, config_trainer, train_data, val_data)
 
 
 def get_random_parameters(parameter_space: dict) -> dict:
@@ -51,8 +55,7 @@ def get_random_parameters(parameter_space: dict) -> dict:
     return random_parameters
 
 
-def grid_search_bow(parameter_space: dict) -> (object, list, list, str, dict):
-
+def grid_search_bow(parameter_space: dict) -> (object, list, list, list, str, dict):
     # prepare variables for saving the best model
     best_model = None
     max_acc = 0
@@ -74,7 +77,7 @@ def grid_search_bow(parameter_space: dict) -> (object, list, list, str, dict):
     for parameters in parameter_dictionary_list:
         # init/train/save and get accuracies and models
         try:
-            model, loss, acc, model_name = _init_train_save(parameters)
+            model, loss_valid, acc_valid, loss_train, model_name = _init_train_save(parameters)
         except Exception as e:
             exception_str_ = 'Model type {} encountered an exception for parameters:\n\t{}\n{}'
             print(exception_str_.format(parameters['model_type'], parameters, e), flush=True)
@@ -82,17 +85,17 @@ def grid_search_bow(parameter_space: dict) -> (object, list, list, str, dict):
 
         # print results
         results_str_ = 'Model name: {}\tMax accuracy: {:.4f}, Final accuracy: {:.4f}'
-        print(results_str_.format(model_name, max(*acc), acc[-1]), flush=True)
+        print(results_str_.format(model_name, max(*acc_valid), acc_valid[-1]), flush=True)
 
         # update best model
-        if _is_model_better(acc, max_acc):
-            max_acc = acc[-1]
-            best_model = (model, loss, acc, model_name, parameters)
+        if _is_model_better(acc_valid, max_acc):
+            max_acc = acc_valid[-1]
+            best_model = (model, loss_valid, acc_valid, loss_train, model_name, parameters)
 
     return best_model
 
 
-def grid_search_lstm(parameter_space: dict) -> (object, list, list, str, dict):
+def grid_search_lstm(parameter_space: dict) -> (object, list, list, list, str, dict):
 
     # prepare variables for saving the best model
     best_model = None
@@ -107,7 +110,7 @@ def grid_search_lstm(parameter_space: dict) -> (object, list, list, str, dict):
     for parameters in parameter_dictionary_list:
         # init/train/save and get accuracies and models
         try:
-            model, loss, acc, model_name = _init_train_save(parameters)
+            model, loss_valid, acc_valid, loss_train, model_name = _init_train_save(parameters)
         except Exception as e:
             exception_str_ = 'Model type {} encountered an exception for parameters:\n\t{}\n{}'
             print(exception_str_.format(parameters['model_type'], parameters, e), flush=True)
@@ -115,17 +118,17 @@ def grid_search_lstm(parameter_space: dict) -> (object, list, list, str, dict):
 
         # print results
         results_str_ = 'Model name: {}\tMax accuracy: {:.4f}, Final accuracy: {:.4f}'
-        print(results_str_.format(model_name, max(*acc), acc[-1]), flush=True)
+        print(results_str_.format(model_name, max(*acc_valid), acc_valid[-1]), flush=True)
 
         # update best model
-        if _is_model_better(acc, max_acc):
-            max_acc = acc[-1]
-            best_model = (model, loss, acc, model_name, parameters)
+        if _is_model_better(acc_valid, max_acc):
+            max_acc = acc_valid[-1]
+            best_model = (model, loss_valid, acc_valid, loss_train, model_name, parameters)
 
     return best_model
 
 
-def random_search(parameter_space: dict, search_iterations: int) -> (object, list, list, str, dict):
+def random_search(parameter_space: dict, search_iterations: int) -> (object, list, list, list, str, dict):
     # prepare variables for saving the best model
     best_model = None
     max_acc = 0
@@ -136,7 +139,7 @@ def random_search(parameter_space: dict, search_iterations: int) -> (object, lis
 
         # init/train/save and get accuracies and models
         try:
-            model, loss, acc, model_name = _init_train_save(parameters)
+            model, loss_valid, acc_valid, loss_train, model_name = _init_train_save(parameters)
         except Exception as e:
             exception_str_ = 'Model type {} encountered an exception for parameters:\n\t{}\n{}'
             print(exception_str_.format(parameters['model_type'], parameters, e), flush=True)
@@ -144,28 +147,26 @@ def random_search(parameter_space: dict, search_iterations: int) -> (object, lis
 
         # print results
         results_str_ = 'Model name: {}\tMax accuracy: {:.4f}, Final accuracy: {:.4f}'
-        print(results_str_.format(model_name, max(*acc), acc[-1]), flush=True)
+        print(results_str_.format(model_name, max(*acc_valid), acc_valid[-1]), flush=True)
 
         # update best model
-        if _is_model_better(acc, max_acc):
-            max_acc = acc[-1]
-            best_model = (model, loss, acc, model_name, parameters)
+        if _is_model_better(acc_valid, max_acc):
+            max_acc = acc_valid[-1]
+            best_model = (model, loss_valid, acc_valid, loss_train, model_name, parameters)
 
     return best_model
 
 
-def search_hyperparameters_bow(parameter_space: dict, search_type: str, search_iterations: int) -> (object, list, list, str, dict):
-
+def search_hyperparameters_bow(parameter_space: dict, search_type: str, search_iterations: int) -> (object, list, list, list, str, dict):
     if search_type == RANDOM_SEARCH:
-        random_search(parameter_space, search_iterations)
+        return random_search(parameter_space, search_iterations)
     elif search_type == GRID_SEARCH:
-        grid_search_bow(parameter_space)
+        return grid_search_bow(parameter_space)
     else:
         raise Exception('Argument search_type has an invalid value: {}'.format(search_type))
 
 
-def search_hyperparameters_lstm(parameter_space: dict, search_type: str, search_iterations: int) -> (object, list, list, str, dict):
-
+def search_hyperparameters_lstm(parameter_space: dict, search_type: str, search_iterations: int) -> (object, list, list, list, str, dict):
     if search_type == RANDOM_SEARCH:
         return random_search(parameter_space, search_iterations)
     elif search_type == GRID_SEARCH:
@@ -174,7 +175,7 @@ def search_hyperparameters_lstm(parameter_space: dict, search_type: str, search_
         raise Exception('Argument search_type has an invalid value: {}'.format(search_type))
 
 
-def search_hyperparameters(parameter_space: dict, args) -> (object, list, list, str, dict):
+def search_hyperparameters(parameter_space: dict, args) -> (object, list, list, list, str, dict):
     if args.model == BOW:
         return search_hyperparameters_bow(parameter_space, args.search_type, args.search_iterations)
     elif args.model == LSTM:
@@ -186,9 +187,9 @@ def search_hyperparameters(parameter_space: dict, args) -> (object, list, list, 
 def main():
     # read command line parameters
     parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--search-type", type=str, default=RANDOM_SEARCH, choices=[RANDOM_SEARCH, GRID_SEARCH])
-    parser.add_argument("-i", "--search-iterations", type=int, default=RANDOM_ITERATIONS)
-    parser.add_argument("-m", "--model", type=str, default=LSTM, choices=[LSTM, BOW])
+    parser.add_argument('--search-type', type=str, default=RANDOM_SEARCH, choices=[RANDOM_SEARCH, GRID_SEARCH])
+    parser.add_argument('--search-iterations', type=int, default=RANDOM_ITERATIONS)
+    parser.add_argument('--model', type=str, default=LSTM, choices=[LSTM, BOW])
     args = parser.parse_args()
 
     # setup parameter space
@@ -196,22 +197,19 @@ def main():
         'nr_epoch': [5, 8, 10],
         'batch_sizes': [32, 64, 128],
         'learning_rate': [1e-2, 1e-3, 1e-4, 1e-5],
+        'image_features': [2048],
         'max_question_lens': [10, 15, 20, 30],
         'max_answers': [500, 1000, 2000, 4000, 'all'],
         'embedding_dims': [200, 300, 400, 600],
         'lstm_hidden_units': [256, 512, 104],
         'number_stacked_lstms': [0, 1, 2],
-        'add_mlp': [False, True],
-        'mlp_hidden_units': [512, 1024, 2048],
-        'dropouts': [0.3, 0.4, 0.5],
         'visual_model': [False, True],
-        'attention': [False, True],
         'pre_trained_embedding': [True, False],
         'model_type': [args.model],
     }
 
     # search optimal hyper-parameters
-    model, loss, acc, model_name, parameters = search_hyperparameters(parameter_space, args)
+    model, loss_valid, acc_valid, loss_train, model_name, parameters = search_hyperparameters(parameter_space, args)
 
 
 if __name__ == "__main__":
