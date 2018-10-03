@@ -44,6 +44,8 @@ def _init_train_save(parameters: dict):
     train_data = VQADataset("train", True, fix_q_len=parameters['question_max_len'])
     val_data = VQADataset("val", True, fix_q_len=parameters['question_max_len'])
 
+    print('\nStart training with parameters: \nconfig_model:{}\nconfig_trainer:{}\n'.format(config_model, config_trainer))
+
     return init_train_save(config_model, config_trainer, train_data, val_data)
 
 
