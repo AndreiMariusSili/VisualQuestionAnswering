@@ -1,5 +1,5 @@
 from collections import Counter, defaultdict
-from typing import Iterable, Dict, Union
+from typing import Dict, Union, List
 from misc.constants import *
 import pickle
 import gzip
@@ -77,11 +77,11 @@ def run(max_labels: int):
     print('Done.')
 
 
-def __most_common_answer(answers: Iterable[str]) -> str:
+def __most_common_answer(answers: List[Dict[str, str]]) -> str:
     """Find the most common item in an iterable of answers to a question.
 
     Args:
-        answers: iterable of answers.
+        answers: list of answers.
 
     Returns:
         the most common answer
@@ -197,8 +197,7 @@ def __generate_dictionaries(path_to_csv: str, max_labels: Union[str, int] = 1000
     if str(max_labels) == 'all':
         idx2labels = sorted_answers
     else:
-        idx2labels = sorted_answers[0:max_labels - 1]
-
+        idx2labels = sorted_answers[0:max_labels]
     idx2labels.append(OOV)  # append out of vocabulary word
 
     for i in range(len(idx2labels)):
@@ -208,7 +207,7 @@ def __generate_dictionaries(path_to_csv: str, max_labels: Union[str, int] = 1000
         pickle.dump(idx2word, fd)
     with open(PROCESSED_FOLDER + WORD2IDX_FILE, 'wb') as fd:
         pickle.dump(word2idx, fd)
-    with open(PROCESSED_FOLDER + LABELS2IDX_FILE, 'wb') as fd:
+    with open(PROCESSED_FOLDER + LABEL2IDX_FILE, 'wb') as fd:
         pickle.dump(labels2idx, fd)
-    with open(PROCESSED_FOLDER + IDX2LABELS_FILE, 'wb') as fd:
+    with open(PROCESSED_FOLDER + IDX2LABEL_FILE, 'wb') as fd:
         pickle.dump(idx2labels, fd)

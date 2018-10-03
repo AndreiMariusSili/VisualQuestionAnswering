@@ -2,6 +2,7 @@ import torch
 
 DEVICE = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
+
 class LSTM(torch.nn.Module):
     """
     LSTM Model PyTorch implementation
@@ -39,11 +40,13 @@ class LSTM(torch.nn.Module):
                 self.embedding.weight.requires_grad = False
 
         if self.visual_model and 'lstm_input' in self.visual_features_location:
-            self.lstm = torch.nn.LSTM(input_size=embedding_size+img_feature_size, hidden_size=hidden_size, num_layers=number_stacked_lstms,
-                                batch_first=True)
+            self.lstm = torch.nn.LSTM(input_size=embedding_size + img_feature_size, hidden_size=hidden_size,
+                                      num_layers=number_stacked_lstms,
+                                      batch_first=True)
         else:
-            self.lstm = torch.nn.LSTM(input_size=embedding_size, hidden_size=hidden_size, num_layers=number_stacked_lstms,
-                                batch_first=True)
+            self.lstm = torch.nn.LSTM(input_size=embedding_size, hidden_size=hidden_size,
+                                      num_layers=number_stacked_lstms,
+                                      batch_first=True)
         if self.visual_model and 'lstm_context' in self.visual_features_location:
             self.layer_features_to_hidden = torch.nn.Linear(img_feature_size, hidden_size)
         if self.visual_model and 'lstm_output' in self.visual_features_location:
@@ -55,11 +58,11 @@ class LSTM(torch.nn.Module):
         input = self.embedding(sentence)
 
         if self.visual_model and 'lstm_input' in self.visual_features_location:
-            #concat image to each input
+            # concat image to each input
             input = torch.cat((input, image_features.unsqueeze(1).repeat(1, input.shape[1], 1)), 2)
 
         if self.visual_model and 'lstm_context' in self.visual_features_location:
-            c_0 = self.layer_features_to_hidden(image_features).unsqueeze(0)#repeat(self.number_stacked_lstms)
+            c_0 = self.layer_features_to_hidden(image_features).unsqueeze(0)  # repeat(self.number_stacked_lstms)
         else:
             c_0 = torch.zeros(self.number_stacked_lstms, sentence.shape[0], self.hidden_size, device=DEVICE)
 
@@ -72,7 +75,7 @@ class LSTM(torch.nn.Module):
             lstm_state_image_features = torch.cat((last_lstm_state, image_features), 1)
             output = self.output_linear(lstm_state_image_features)
         else:
-            #only take the state of the last lstm cell to predict the output
+            # only take the state of the last lstm cell to predict the output
             last_lstm_state = lstm_out[:, -1]
             output = self.output_linear(last_lstm_state)
         return output
