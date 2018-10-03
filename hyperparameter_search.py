@@ -24,23 +24,23 @@ def _is_model_better(acc, max_acc):
 def _init_train_save(parameters: dict):
     # migrate parameters from Dictionary() to Namespace()
     config_model = SimpleNamespace()
-    config_model.model_type = parameters['model_type']
-    config_model.embedding_size = parameters['embedding_size']
-    config_model.hidden_units = parameters['lstm_hidden_units']
-    config_model.number_stacked_lstms = parameters['number_stacked_lstms']
-    config_model.visual_model = parameters['visual_model']
-    config_model.visual_features_location = parameters['visual_features_location']
-    config_model.use_pretrained_embeddings = parameters['use_pretrained_embeddings']
-    config_model.img_features_len = parameters['img_features_len']
-    config_model.lstm_dropout = parameters['lstm_dropout']
-    config_model.question_max_len = parameters['question_max_len']
-    config_model.full_size_visual_features = parameters['full_size_visual_features']
+    config_model.model_type = parameters.get('model_type')
+    config_model.embedding_size = parameters.get('embedding_size')
+    config_model.hidden_units = parameters.get('lstm_hidden_units')
+    config_model.number_stacked_lstms = parameters.get('number_stacked_lstms')
+    config_model.visual_model = parameters.get('visual_model')
+    config_model.visual_features_location = parameters.get('visual_features_location')
+    config_model.use_pretrained_embeddings = parameters.get('use_pretrained_embeddings')
+    config_model.img_features_len = parameters.get('img_features_len')
+    config_model.lstm_dropout = parameters.get('lstm_dropout')
+    config_model.question_max_len = parameters.get('question_max_len')
+    config_model.full_size_visual_features = parameters.get('full_size_visual_features')
 
     config_trainer = SimpleNamespace()
-    config_trainer.save = parameters['save']
-    config_trainer.verbose = parameters['verbose']
-    config_trainer.epochs = parameters['epochs']
-    config_trainer.lr = parameters['lr']
+    config_trainer.save = parameters.get('save')
+    config_trainer.verbose = parameters.get('verbose')
+    config_trainer.epochs = parameters.get('epochs')
+    config_trainer.lr = parameters.get('lr')
 
     train_data = VQADataset("train", True, fix_q_len=parameters['question_max_len'])
     val_data = VQADataset("val", True, fix_q_len=parameters['question_max_len'])
@@ -61,13 +61,12 @@ def get_random_parameters(parameter_space: dict) -> dict:
 
 def grid_search_bow(parameter_space: dict) -> (object, list, list, list, str, dict):
     # prepare variables for saving the best model
-    best_model = None
+    best_model = (None, None, None, None, None, None)
     max_acc = 0
 
     # remove unused parameters
     parameter_space.pop('lstm_hidden_units', None)
     parameter_space.pop('number_stacked_lstms', None)
-    parameter_space.pop('mlp_hidden_units', None)
     parameter_space.pop('lstm_dropout', None)
     parameter_space.pop('visual_features_location', None)
     parameter_space.pop('full_size_visual_features', None)
@@ -101,7 +100,7 @@ def grid_search_bow(parameter_space: dict) -> (object, list, list, list, str, di
 
 def grid_search_lstm(parameter_space: dict) -> (object, list, list, list, str, dict):
     # prepare variables for saving the best model
-    best_model = None
+    best_model = (None, None, None, None, None, None)
     max_acc = 0
 
     if parameter_space['full_size_visual_features']:
@@ -137,7 +136,7 @@ def grid_search_lstm(parameter_space: dict) -> (object, list, list, list, str, d
 
 def random_search(parameter_space: dict, search_iterations: int) -> (object, list, list, list, str, dict):
     # prepare variables for saving the best model
-    best_model = None
+    best_model = (None, None, None, None, None, None)
     max_acc = 0
 
     for iteration in range(0, search_iterations):
@@ -194,7 +193,7 @@ def search_hyperparameters(parameter_space: dict, args) -> (object, list, list, 
 def main():
     # read command line parameters
     parser = argparse.ArgumentParser()
-    parser.add_argument('--search-type', type=str, default=RANDOM_SEARCH, choices=[RANDOM_SEARCH, GRID_SEARCH])
+    parser.add_argument('--search-type', type=str, default=GRID_SEARCH, choices=[RANDOM_SEARCH, GRID_SEARCH])
     parser.add_argument('--search-iterations', type=int, default=RANDOM_ITERATIONS)
     parser.add_argument('--model', type=str, default=LSTM, choices=[LSTM, BOW])
     args = parser.parse_args()
