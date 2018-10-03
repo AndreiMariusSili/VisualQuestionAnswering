@@ -34,6 +34,7 @@ def _init_train_save(parameters: dict):
     config_model.img_features_len = parameters['img_features_len']
     config_model.lstm_dropout = parameters['lstm_dropout']
     config_model.question_max_len = parameters['question_max_len']
+    config_model.full_size_visual_features = parameters['full_size_visual_features']
 
     config_trainer = SimpleNamespace()
     config_trainer.save = parameters['save']
@@ -69,6 +70,7 @@ def grid_search_bow(parameter_space: dict) -> (object, list, list, list, str, di
     parameter_space.pop('mlp_hidden_units', None)
     parameter_space.pop('lstm_dropout', None)
     parameter_space.pop('visual_features_location', None)
+    parameter_space.pop('full_size_visual_features', None)
 
     # run the grid search
     keys = list(parameter_space.keys())
@@ -101,6 +103,10 @@ def grid_search_lstm(parameter_space: dict) -> (object, list, list, list, str, d
     # prepare variables for saving the best model
     best_model = None
     max_acc = 0
+
+    if parameter_space['full_size_visual_features']:
+        parameter_space.pop('lstm_hidden_units', None)
+        # should also remove 'lstm_context' from list of list, but life is too short.
 
     # run the grid search
     keys = list(parameter_space.keys())
@@ -198,6 +204,7 @@ def main():
         'model_type': [args.model],  # bow, lstm
         'save': [True],
         'verbose': [True],
+        'full_size_visual_features': [False],
         'img_features_len': [2048],
         'question_max_len': [20],  # bow
         'embedding_size': [300],
