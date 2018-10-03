@@ -103,7 +103,7 @@ def grid_search_lstm(parameter_space: dict) -> (object, list, list, list, str, d
     best_model = (None, None, None, None, None, None)
     max_acc = 0
 
-    if parameter_space['full_size_visual_features']:
+    if parameter_space['full_size_visual_features'][0]:
         parameter_space.pop('lstm_hidden_units', None)
         # should also remove 'lstm_context' from list of list, but life is too short.
 
@@ -202,7 +202,7 @@ def main():
     parameter_space = {
         'model_type': [args.model],  # bow, lstm
         'save': [True],
-        'verbose': [True],
+        'verbose': [False],
         'full_size_visual_features': [False],
         'img_features_len': [2048],
         'question_max_len': [20],  # bow
