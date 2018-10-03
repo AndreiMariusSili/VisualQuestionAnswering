@@ -207,8 +207,9 @@ def main():
         'visual_model': [False, True],
         'use_pretrained_embeddings': [True, False],
         'lstm_dropout': [0.0, 0.3, 0.5],
-        'visual_features_location': [['lstm_context', 'lstm_output']]  # any 'lstm_context', 'lstm_output', 'lstm_input'
+        'visual_features_location': [['lstm_input'], ['lstm_context'], ['lstm_output'], ['lstm_context', 'lstm_output']]
     }
+    # 'visual_features_location' can be list of any combinations of ['lstm_context', 'lstm_output', 'lstm_input']
 
     # search optimal hyper-parameters
     model, loss_valid, acc_valid, loss_train, model_name, parameters = search_hyperparameters(parameter_space, args)
