@@ -81,7 +81,7 @@ if __name__ == "__main__":
     config_trainer.epochs = 100
     config_trainer.lr = 0.001
 
-    config_trainer.data = "dummy"  # ['dummy', 'full']
+    config_trainer.data = "dummy"  # ["dummy", "full"]
     if config_trainer.data == "dummy":
         train_set = VQADataset("dummy", True, QUESTION_MAX_LEN)
         val_set = VQADataset("dummy", True, QUESTION_MAX_LEN)

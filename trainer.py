@@ -40,6 +40,7 @@ class Trainer(object):
             loss_train.extend(epoch_loss_train)
 
             epoch_loss_valid, epoch_acc_valid = self.validate(model=model, criterion=criterion, verbose=verbose)
+
             loss_valid.extend(epoch_loss_valid)
             acc_valid.extend(epoch_acc_valid)
 
@@ -84,7 +85,7 @@ class Trainer(object):
         accuracy_vector.append(accuracy)
 
         # Print accuracy
-        print('Validation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)'.format(
+        print('Validation set: [Average loss: {:.4f}]\t[Accuracy: {}/{}\t({:.2f}%)]'.format(
             avg_loss, correct.cpu(), len(self.valid_data), accuracy))
 
         return loss_vector, accuracy_vector
@@ -101,16 +102,14 @@ class Trainer(object):
             loss = criterion(output, target.squeeze())
             loss.backward()
             optimizer.step()
-            if verbose and batch_idx % log_interval == 0:
+            if batch_idx % log_interval == 0:
                 preds = output.argmax(-1)
-                acc = float(torch.sum(preds == target.squeeze()).cpu().item()) / BATCH_SIZE
-                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\t Acc: {:.6f}'.format(epoch + 1,
-                                                                                             (batch_idx + 1) * len(
-                                                                                                 questions),
-                                                                                             len(self.train_data),
-                                                                                             100 * batch_idx / len(
-                                                                                                 self.train_loader),
-                                                                                             loss.item(), acc))
+                correct = torch.sum(preds == target.squeeze()).cpu().item()
+                acc = float(correct) / BATCH_SIZE
+                print('Train Epoch: {} [{}/{}\t({:.0f}%)]\t[Loss: {:.6f}]\t[Acc: {}/{}\t({:.2f}%)]'
+                      .format(epoch + 1, (batch_idx + 1) * len(questions), len(self.train_data),
+                              100 * (batch_idx + 1) / len(self.train_loader), loss.item(), correct, BATCH_SIZE,
+                              100 * acc))
 
             loss_vector.append(loss.item())
 
