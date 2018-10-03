@@ -77,7 +77,7 @@ if __name__ == "__main__":
 
     config_trainer.save = True
     config_trainer.verbose = True
-    config_trainer.epochs = 2
+    config_trainer.epochs = 100
     config_trainer.lr = 0.001
 
     config_trainer.data = "full"  # ['dummy', 'full']
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     else:
         raise ValueError('Unknown data flag.')
 
-    action = "eval"  # ["train", "eval", "test"]
+    action = "train"  # ["train", "eval", "test"]
     if action == "train":
         init_train_save(config_model, config_trainer, train_set, val_set)
     elif action == "eval":

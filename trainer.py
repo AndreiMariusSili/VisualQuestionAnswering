@@ -57,8 +57,9 @@ class Trainer(object):
 
     def validate(self, model, criterion, verbose=True):
         model.eval()
-        val_loss, correct = torch.tensor([0], dtype=torch.float, device=self.device), 0
+        correct = 0
         loss_vector, accuracy_vector = [], []
+        loss_sum = 0
         with torch.no_grad():
             for idx in range(len(self.valid_data)):
                 question, image_features, answer = self.valid_data[idx]
@@ -67,8 +68,7 @@ class Trainer(object):
                 answer = torch.tensor(answer, dtype=torch.long, device=self.device)
                 output = model(question, image_features)
                 loss = criterion(output, answer)
-                val_loss = torch.add(val_loss, loss)
-
+                loss_sum += loss.item()
                 pred = output.data.argmax(1)  # get the index of the max log-probability
                 correct += pred.eq(answer).sum().cpu()
 
@@ -77,14 +77,14 @@ class Trainer(object):
                     print(("Truth", self.valid_data.convert_answer_to_string([answer.cpu().item()])), end=" ")
                     print(("Prediction", self.valid_data.convert_answer_to_string([pred.cpu().item()])))
 
-        val_loss /= len(self.valid_data)
-        loss_vector.append(val_loss.item())
+        avg_loss = loss_sum / len(self.valid_data)
+        loss_vector.append(avg_loss)
         accuracy = float(100. * correct) / len(self.valid_data)
         accuracy_vector.append(accuracy)
 
         # Print accuracy
         print('Validation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)'.format(
-            val_loss.item(), correct.cpu(), len(self.valid_data), accuracy))
+            avg_loss, correct.cpu(), len(self.valid_data), accuracy))
 
         return loss_vector, accuracy_vector
 
@@ -101,12 +101,14 @@ class Trainer(object):
             loss.backward()
             optimizer.step()
             if verbose and batch_idx % log_interval == 0:
-                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch + 1,
+                preds = output.argmax(-1)
+                acc = float(torch.sum(preds == target.squeeze()).cpu().item()) / BATCH_SIZE
+                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\t Acc: {:.6f}'.format(epoch + 1,
                                                                                (batch_idx + 1) * len(questions),
                                                                                len(self.train_data),
                                                                                100 * batch_idx / len(
                                                                                    self.train_loader),
-                                                                               loss.item()))
+                                                                               loss.item(), acc))
 
             loss_vector.append(loss.item())
 

@@ -35,7 +35,7 @@ class LSTM(torch.nn.Module):
 
         self.embedding = torch.torch.nn.Embedding(vocab_size, embedding_size)
         if pretrained_embeddings is not None:
-            self.embedding.weight.data.copy_(torch.tensor(pretrained_embeddings, dtype=torch.float64))
+            self.embedding.weight.data.copy_(torch.from_numpy(pretrained_embeddings))
             if not embedding_trainable:
                 self.embedding.weight.requires_grad = False
 
