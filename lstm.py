@@ -1,9 +1,8 @@
 import torch
-import torch.nn as nn
 
 DEVICE = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-class LSTM(nn.Module):
+class LSTM(torch.nn.Module):
     """
     LSTM Model PyTorch implementation
     """
@@ -33,24 +32,24 @@ class LSTM(nn.Module):
         self.hidden_size = hidden_size
         self.number_stacked_lstms = number_stacked_lstms
 
-        self.embedding = nn.Embedding(vocab_size, embedding_size)
+        self.embedding = torch.torch.nn.Embedding(vocab_size, embedding_size)
         if pretrained_embeddings is not None:
-            self.embedding.weight.data.copy_(torch.from_numpy(pretrained_embeddings))
+            self.embedding.weight.data.copy_(torch.tensor(pretrained_embeddings, dtype=torch.float64))
             if not embedding_trainable:
                 self.embedding.weight.requires_grad = False
 
         if self.visual_model and 'lstm_input' in self.visual_features_location:
-            self.lstm = nn.LSTM(input_size=embedding_size+img_feature_size, hidden_size=hidden_size, num_layers=number_stacked_lstms,
+            self.lstm = torch.nn.LSTM(input_size=embedding_size+img_feature_size, hidden_size=hidden_size, num_layers=number_stacked_lstms,
                                 batch_first=True)
         else:
-            self.lstm = nn.LSTM(input_size=embedding_size, hidden_size=hidden_size, num_layers=number_stacked_lstms,
+            self.lstm = torch.nn.LSTM(input_size=embedding_size, hidden_size=hidden_size, num_layers=number_stacked_lstms,
                                 batch_first=True)
         if self.visual_model and 'lstm_context' in self.visual_features_location:
-            self.layer_features_to_hidden = nn.Linear(img_feature_size, hidden_size)
+            self.layer_features_to_hidden = torch.nn.Linear(img_feature_size, hidden_size)
         if self.visual_model and 'lstm_output' in self.visual_features_location:
-            self.output_linear = nn.Linear(hidden_size + img_feature_size, output_size)
+            self.output_linear = torch.nn.Linear(hidden_size + img_feature_size, output_size)
         else:
-            self.output_linear = nn.Linear(hidden_size, img_feature_size)
+            self.output_linear = torch.nn.Linear(hidden_size, img_feature_size)
 
     def forward(self, sentence, image_features=None):
         input = self.embedding(sentence)
