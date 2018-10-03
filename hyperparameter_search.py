@@ -44,8 +44,7 @@ def _init_train_save(parameters: dict):
     train_data = VQADataset("train", True, fix_q_len=parameters['question_max_len'])
     val_data = VQADataset("val", True, fix_q_len=parameters['question_max_len'])
 
-    # return init_train_save(config_model, config_trainer, train_data, val_data)
-    return None
+    return init_train_save(config_model, config_trainer, train_data, val_data)
 
 
 def get_random_parameters(parameter_space: dict) -> dict:
