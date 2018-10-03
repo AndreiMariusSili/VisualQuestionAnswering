@@ -58,7 +58,7 @@ def test():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-t', '--task', required=True, type=str, choices=['process', 'post_process', 'test'],
+    parser.add_argument('-t', '--task', required=True, type=str, choices=['process', 'post_process', 'test', 'magic'],
                         help='Which action to perform.')
     parser.add_argument('-l', '--labels', type=int, default=1000,
                         help='How many target labels to tokenize(rest is treated as OOV)')
