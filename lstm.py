@@ -10,7 +10,7 @@ class LSTM(torch.nn.Module):
 
     def __init__(self, vocab_size, output_size, embedding_size, hidden_size, img_feature_size=2048,
                  number_stacked_lstms=1, visual_model=False, pretrained_embeddings=None, embedding_trainable=True,
-                 visual_features_location=None):
+                 visual_features_location=None, dropout=0):
         """
 
         :param vocab_size:
@@ -42,11 +42,11 @@ class LSTM(torch.nn.Module):
         if self.visual_model and 'lstm_input' in self.visual_features_location:
             self.lstm = torch.nn.LSTM(input_size=embedding_size + img_feature_size, hidden_size=hidden_size,
                                       num_layers=number_stacked_lstms,
-                                      batch_first=True)
+                                      batch_first=True, dropout=dropout)
         else:
             self.lstm = torch.nn.LSTM(input_size=embedding_size, hidden_size=hidden_size,
                                       num_layers=number_stacked_lstms,
-                                      batch_first=True)
+                                      batch_first=True, dropout=dropout)
         if self.visual_model and 'lstm_context' in self.visual_features_location:
             self.layer_features_to_hidden = torch.nn.Linear(img_feature_size, hidden_size)
         if self.visual_model and 'lstm_output' in self.visual_features_location:
@@ -62,7 +62,7 @@ class LSTM(torch.nn.Module):
             input = torch.cat((input, image_features.unsqueeze(1).repeat(1, input.shape[1], 1)), 2)
 
         if self.visual_model and 'lstm_context' in self.visual_features_location:
-            c_0 = self.layer_features_to_hidden(image_features).unsqueeze(0)  # repeat(self.number_stacked_lstms)
+            c_0 = self.layer_features_to_hidden(image_features).unsqueeze(0).repeat(self.number_stacked_lstms, 1, 1)
         else:
             c_0 = torch.zeros(self.number_stacked_lstms, sentence.shape[0], self.hidden_size, device=DEVICE)
 

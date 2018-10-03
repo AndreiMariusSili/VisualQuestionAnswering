@@ -73,7 +73,8 @@ class Trainer(object):
                 correct += pred.eq(answer).sum().cpu()
 
                 if verbose and idx < 10:
-                    print(self.valid_data.convert_question_to_string(question.squeeze().cpu().numpy().tolist()), end=" ")
+                    print(self.valid_data.convert_question_to_string(question.squeeze().cpu().numpy().tolist()),
+                          end=" ")
                     print(("Truth", self.valid_data.convert_answer_to_string([answer.cpu().item()])), end=" ")
                     print(("Prediction", self.valid_data.convert_answer_to_string([pred.cpu().item()])))
 
@@ -97,18 +98,19 @@ class Trainer(object):
             optimizer.zero_grad()
             output = model(questions, image_features)
 
-            loss = criterion(output, target[:, 0])
+            loss = criterion(output, target.squeeze())
             loss.backward()
             optimizer.step()
             if verbose and batch_idx % log_interval == 0:
                 preds = output.argmax(-1)
                 acc = float(torch.sum(preds == target.squeeze()).cpu().item()) / BATCH_SIZE
                 print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\t Acc: {:.6f}'.format(epoch + 1,
-                                                                               (batch_idx + 1) * len(questions),
-                                                                               len(self.train_data),
-                                                                               100 * batch_idx / len(
-                                                                                   self.train_loader),
-                                                                               loss.item(), acc))
+                                                                                             (batch_idx + 1) * len(
+                                                                                                 questions),
+                                                                                             len(self.train_data),
+                                                                                             100 * batch_idx / len(
+                                                                                                 self.train_loader),
+                                                                                             loss.item(), acc))
 
             loss_vector.append(loss.item())
 

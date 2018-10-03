@@ -33,7 +33,7 @@ def init_train_save(cfg_model, cfg_trainer, train_data, val_data):
                      hidden_size=cfg_model.hidden_units, img_feature_size=cfg_model.img_features_len,
                      number_stacked_lstms=cfg_model.number_stacked_lstms,
                      visual_model=cfg_model.visual_model, visual_features_location=cfg_model.visual_features_location,
-                     pretrained_embeddings=pretrained_embeddings)
+                     pretrained_embeddings=pretrained_embeddings, dropout=cfg_model.lstm_dropout)
     elif cfg_model.model_type == 'bow':
         model = BOW(vocab_size=vocab_size, output_size=output_size, embedding_size=cfg_model.embedding_size,
                     question_len=cfg_model.question_max_len, img_feature_size=cfg_model.img_features_len,
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     config_model.model_type = 'lstm'
     config_model.embedding_size = 300
     config_model.hidden_units = 256
-    config_model.number_stacked_lstms = 1
+    config_model.number_stacked_lstms = 2
     config_model.visual_model = True
     config_model.visual_features_location = ['lstm_context',
                                              'lstm_output']  # ['lstm_context', 'lstm_output', 'lstm_input']
@@ -74,13 +74,14 @@ if __name__ == "__main__":
     config_model.embedding_size = 300
     config_model.img_features_len = IMG_FEATURES_LEN
     config_model.question_max_len = QUESTION_MAX_LEN
+    config_model.lstm_dropout = 0.5
 
     config_trainer.save = True
     config_trainer.verbose = True
     config_trainer.epochs = 100
     config_trainer.lr = 0.001
 
-    config_trainer.data = "full"  # ['dummy', 'full']
+    config_trainer.data = "dummy"  # ['dummy', 'full']
     if config_trainer.data == "dummy":
         train_set = VQADataset("dummy", True, QUESTION_MAX_LEN)
         val_set = VQADataset("dummy", True, QUESTION_MAX_LEN)
