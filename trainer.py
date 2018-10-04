@@ -21,6 +21,9 @@ class Trainer(object):
         self.valid_data = valid_data
         self.train_loader = data.DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True,
                                             num_workers=NUM_WORKERS, collate_fn=train_data.collate_fn)
+        self.valid_loader = data.DataLoader(valid_data, batch_size=1, shuffle=True,
+                                            num_workers=0, collate_fn=valid_data.collate_fn)
+
         self.device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
         self.serializer = serializer
 
@@ -62,18 +65,19 @@ class Trainer(object):
         loss_vector, accuracy_vector = [], []
         loss_sum = 0
         with torch.no_grad():
-            for idx in range(len(self.valid_data)):
-                question, image_features, answer = self.valid_data[idx]
-                question = torch.tensor(question, dtype=torch.long, device=self.device).unsqueeze(0)  # batch dim
-                image_features = torch.tensor(image_features, dtype=torch.float, device=self.device).unsqueeze(0)
-                answer = torch.tensor(answer, dtype=torch.long, device=self.device)
+            #for idx in range(len(self.valid_data)):
+                # question, image_features, answer = self.valid_data[idx]
+            for batch_idx, (question, image_features, answer) in enumerate(self.valid_loader):
+                question = torch.tensor(question, dtype=torch.long, device=self.device)  # batch dim
+                image_features = torch.tensor(image_features, dtype=torch.float, device=self.device)
+                answer = torch.tensor(answer, dtype=torch.long, device=self.device).reshape(answer.shape[0])
                 output = model(question, image_features)
                 loss = criterion(output, answer)
                 loss_sum += loss.item()
                 pred = output.data.argmax(1)  # get the index of the max log-probability
                 correct += pred.eq(answer).sum().cpu()
 
-                if verbose and idx < 10:
+                if verbose and batch_idx < 10:
                     print(self.valid_data.convert_question_to_string(question.squeeze().cpu().numpy().tolist()),
                           end=" ")
                     print(("Truth", self.valid_data.convert_answer_to_string([answer.cpu().item()])), end=" ")
