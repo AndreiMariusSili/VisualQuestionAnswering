@@ -47,7 +47,7 @@ def init_train_save(cfg_model, cfg_trainer, train_data, val_data):
 
     # MODEL NAME is set HERE
     return trainer.train(model, cfg_trainer.epochs, cfg_trainer.lr, cfg_trainer.verbose, cfg_trainer.save,
-                         model_name=cfg_model.model_type, config_trainer=cfg_trainer, config_model=cfg_model)
+                         model_name=cfg_model.model_name, config_trainer=cfg_trainer, config_model=cfg_model)
 
 
 def load_evaluate(model_name, train_data, val_data):
@@ -81,6 +81,8 @@ if __name__ == "__main__":
     config_trainer.verbose = False
     config_trainer.epochs = 100
     config_trainer.lr = 0.001
+
+    config_model.model_name = 'demo_name_{}'.format(config_model.model_type)
 
     config_trainer.data = "dummy"  # ["dummy", "full"]
     if config_trainer.data == "dummy":

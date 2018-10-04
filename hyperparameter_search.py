@@ -21,6 +21,39 @@ def _is_model_better(acc, max_acc):
     return np.mean(acc[-100:]) >= max_acc
 
 
+def _get_model_name(config_model, config_trainer):
+    if config_model.model_type == 'lstm':
+        visual_features_location_str = '{}{}{}'.format(
+            'i' if 'lstm_input' in config_model.visual_features_location else 'x',
+            'c' if 'lstm_context' in config_model.visual_features_location else 'x',
+            'o' if 'lstm_output' in config_model.visual_features_location else 'x'
+        )
+
+        if not config_model.visual_model:
+            visual_features_location_str = 'xxx'
+
+        model_name = '{}_{}_{}_{}drop_{}hidd_{}batch_{}'.format(
+            config_model.model_type,
+            'pre-embed' if config_model.use_pretrained_embeddings else 'rnd-embed',
+            visual_features_location_str,
+            str(config_model.lstm_dropout).replace('.', ''),
+            config_model.hidden_units,
+            config_model.batch_sizes,
+            str(config_trainer.lr).replace('.', '')
+        )
+    else:
+        visual_model = 'ooo' if config_model.visual_model else 'xxx'  # to have the same convention as lstm
+        model_name = '{}_{}_{}_{}batch_{}'.format(
+            config_model.model_type,
+            'pre-embed' if config_model.use_pretrained_embeddings else 'rnd-embed',
+            visual_model,
+            config_model.batch_sizes,
+            str(config_trainer.lr).replace('.', '')
+        )
+
+    return model_name
+
+
 def _init_train_save(parameters: dict):
     # migrate parameters from Dictionary() to Namespace()
     config_model = SimpleNamespace()
@@ -35,12 +68,15 @@ def _init_train_save(parameters: dict):
     config_model.lstm_dropout = parameters.get('lstm_dropout')
     config_model.question_max_len = parameters.get('question_max_len')
     config_model.full_size_visual_features = parameters.get('full_size_visual_features')
+    config_model.batch_sizes = parameters.get('batch_sizes')
 
     config_trainer = SimpleNamespace()
     config_trainer.save = parameters.get('save')
     config_trainer.verbose = parameters.get('verbose')
     config_trainer.epochs = parameters.get('epochs')
     config_trainer.lr = parameters.get('lr')
+
+    config_model.model_name = _get_model_name(config_model, config_trainer)
 
     train_data = VQADataset("train", True, fix_q_len=parameters['question_max_len'])
     val_data = VQADataset("val", True, fix_q_len=parameters['question_max_len'])
@@ -195,7 +231,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--search-type', type=str, default=RANDOM_SEARCH, choices=[RANDOM_SEARCH, GRID_SEARCH])
     parser.add_argument('--search-iterations', type=int, default=RANDOM_ITERATIONS)
-    parser.add_argument('--model', type=str, default=LSTM, choices=[LSTM, BOW])
+    parser.add_argument('--model', type=str, default=BOW, choices=[LSTM, BOW])
     args = parser.parse_args()
 
     # setup parameter space
