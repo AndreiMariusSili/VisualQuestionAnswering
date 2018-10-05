@@ -1,9 +1,7 @@
 # Visual Question Answering
 
 ### Data Prerequisites
-All data must be downloaded from this [Drive folder](https://drive.google.com/drive/folders/1t8_yX-3nE_eL5O8jV1Yamd-gTYAngyPE?usp=sharing) and be placed in folder
-
-```data/processed/```
+All data must be downloaded from this [Drive folder](https://drive.google.com/drive/folders/1t8_yX-3nE_eL5O8jV1Yamd-gTYAngyPE?usp=sharing) and be placed in folder ```data/processed/```.
 
 It should contain 7 .gzip files and 4 .pkl files, containing all the train, validation and test data, together with required dictionaries.
 
