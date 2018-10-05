@@ -1,15 +1,15 @@
 # Visual Question Answering
 
 ### Data Prerequisites
-Required data must be placed in
+All data must be downloaded from this [Drive folder](https://drive.google.com/drive/folders/1t8_yX-3nE_eL5O8jV1Yamd-gTYAngyPE?usp=sharing) and be placed in folder
 
 ```data/processed/```
 
-This folder contains 7 .gzip files and 4 .pkl files, containing all the train, validation and test data, together with all dictionaries.
+It should contain 7 .gzip files and 4 .pkl files, containing all the train, validation and test data, together with required dictionaries.
 
-Pretrained embeddings must be found in 
+Pretrained embeddings must be placed in 
 ```data/embedding/```
-under names `embedding_x.pkl`, where x denotes dimension.
+under file names `embedding_x.pkl`, where x denotes dimension.
 
 ### Running the models
 File `main.py` contains the runnable endpoint of the project.
